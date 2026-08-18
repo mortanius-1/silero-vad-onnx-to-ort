@@ -1,0 +1,44 @@
+name: Convert Silero VAD ONNX to ORT
+
+on:
+  schedule:
+    - cron: '0 0 * * 1'
+  workflow_dispatch:   
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  check-and-convert:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout compiler
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Execute Conversion Script
+        id: compiler
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python convert.py
+
+      - name: Publish ORT release
+        # Publish release if a new version is detected
+        if: steps.compiler.outputs.run_release == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.compiler.outputs.tag }}
+          name: ${{ steps.compiler.outputs.title }}
+          files: |
+            silero_vad.ort

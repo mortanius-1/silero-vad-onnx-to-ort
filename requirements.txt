@@ -1,0 +1,4 @@
+requests
+onnxruntime
+onnx
+flatbuffers
